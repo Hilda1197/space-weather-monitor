@@ -1,0 +1,18 @@
+# 虚拟环境
+venv/
+__pycache__/
+*.pyc
+
+# 数据库（如果包含敏感数据可以不传，但 demo 数据可以传）
+# events.db
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+Thumbs.db
+.DS_Storevenv/ 
+__pycache__/ 
+*.pyc 
+.vscode/ 

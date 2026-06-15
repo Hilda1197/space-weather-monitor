@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>空间天气中断事件看板</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .filters { margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        .stats { margin-bottom: 20px; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>🌍 星载GPS信号中断事件监控</h1>
+    
+    <div class="filters">
+        <label>Kp指数范围：</label>
+        <input type="number" id="minKy" step="0.1" placeholder="最小值">
+        <span>~</span>
+        <input type="number" id="maxKy" step="0.1" placeholder="最大值">
+        <button onclick="loadEvents()">筛选</button>
+        <button onclick="resetFilter()">重置</button>
+    </div>
+    
+    <div class="stats" id="stats">
+        加载统计中...
+    </div>
+    
+    <table id="eventTable">
+        <thead>
+            <tr><th>事件ID</th><th>时间</th><th>持续时长(秒)</th><th>Kp指数</th><th>Dst指数</th><th>类型</th></tr>
+        </thead>
+        <tbody id="eventBody">
+            <tr><td colspan="6">加载中...</td></tr>
+        </tbody>
+    </table>
+    
+    <script>
+        async function loadEvents() {
+            const minKy = document.getElementById('minKy').value;
+            const maxKy = document.getElementById('maxKy').value;
+            let url = '/api/events';
+            const params = new URLSearchParams();
+            if (minKy) params.append('min_ky', minKy);
+            if (maxKy) params.append('max_ky', maxKy);
+            if (params.toString()) url += '?' + params.toString();
+            
+            const res = await fetch(url);
+            const events = await res.json();
+            
+            const tbody = document.getElementById('eventBody');
+            if (events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">无数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = events.map(e => `
+                <tr>
+                    <td>${e.event_id}</td>
+                    <td>${e.event_time}</td>
+                    <td>${e.duration_sec}</td>
+                    <td>${e.ky_index}</td>
+                    <td>${e.dst_index}</td>
+                    <td>${e.interruption_type}</td>
+                </tr>
+            `).join('');
+        }
+        
+        async function loadStats() {
+            const res = await fetch('/api/stats');
+            const stats = await res.json();
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = '📊 事件分类统计：' + stats.map(s => `${s.interruption_type}: ${s.count}`).join(' | ');
+        }
+        
+        function resetFilter() {
+            document.getElementById('minKy').value = '';
+            document.getElementById('maxKy').value = '';
+            loadEvents();
+        }
+        
+        loadEvents();
+        loadStats();
+    </script>
+</body>
+</html>
